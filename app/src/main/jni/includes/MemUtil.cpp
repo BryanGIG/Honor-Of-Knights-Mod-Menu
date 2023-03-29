@@ -128,7 +128,7 @@ namespace MemUtil {
     void *InlineHooker(void *target, void *hooker) {
         SetProtRWX(target);
         dobby_dummy_func_t origin_call;
-        if (DobbyHook(target, (dobby_dummy_func_t) hooker, &origin_call) == RS_SUCCESS) {
+        if (DobbyHook(target, (dobby_dummy_func_t) hooker, &origin_call) == 0) {
             return (void *) origin_call;
         } else {
             LOGE("Failed Hook %p", target);
@@ -137,7 +137,7 @@ namespace MemUtil {
     }
 
     bool InlineUnhooker(void *func) {
-        return DobbyDestroy(func) == RT_SUCCESS;
+        return DobbyDestroy(func) == 0;
     }
 
 }
