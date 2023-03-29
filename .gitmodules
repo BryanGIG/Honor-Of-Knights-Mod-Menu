@@ -1,0 +1,3 @@
+[submodule "Dobby"]
+	path = app/src/main/jni/cheat_library/Dobby
+	url = https://github.com/jmpews/Dobby.git
