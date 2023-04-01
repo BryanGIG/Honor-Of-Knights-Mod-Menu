@@ -5,14 +5,11 @@ uintptr_t libBase;
 bool libLoaded = false;
 
 DWORD findLibrary(const char *library) {
-    char filename[0xFF] = {0},
-            buffer[1024] = {0};
+    char buffer[1024] = {0};
     FILE *fp = NULL;
     DWORD address = 0;
 
-    sprintf(filename, OBFUSCATE("/proc/self/maps"));
-
-    fp = fopen(filename, OBFUSCATE("rt"));
+    fp = fopen(OBFUSCATE("/proc/self/maps"), OBFUSCATE("rt"));
     if (fp == NULL) {
         perror(OBFUSCATE("fopen"));
         goto done;
