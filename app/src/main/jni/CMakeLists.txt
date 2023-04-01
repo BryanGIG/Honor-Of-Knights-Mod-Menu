@@ -17,6 +17,7 @@ add_library(native SHARED
         cheat_main/events.cpp
         cheat_main/MThreadRenderer.cpp
         cheat_library/SDK/Unity/API.cpp
+        cheat_library/SDK/Renderer.cpp
         cheat_library/SDK/GameObject.cpp
         cheat_library/SDK/Object.cpp
         cheat_library/SDK/Screen.cpp
@@ -27,6 +28,7 @@ add_library(native SHARED
         cheat_library/SDK/ActorCreators.cpp
         cheat_library/SDK/ActorLinker.cpp
         cheat_library/SDK/ActorHelper.cpp
+        cheat_library/SDK/ValueLinkerComponent.cpp
         cheat_library/KittyMemory/KittyMemory.cpp
         cheat_library/KittyMemory/MemoryPatch.cpp
         cheat_library/KittyMemory/MemoryBackup.cpp
@@ -46,7 +48,7 @@ add_library(native SHARED
 
 target_compile_definitions(native PRIVATE IMGUI_IMPL_OPENGL_ES2)
 
-if (NOT TARGET dobby)
+if (NOT TARGET dobby_static)
     set(DOBBY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/cheat_library/Dobby)
     macro(SET_OPTION option value)
         set(${option} ${value} CACHE INTERNAL "" FORCE)
@@ -54,15 +56,15 @@ if (NOT TARGET dobby)
     SET_OPTION(DOBBY_DEBUG OFF)
     SET_OPTION(DOBBY_GENERATE_SHARED OFF)
     SET_OPTION(Plugin.Android.BionicLinkerUtil ON)
-    add_subdirectory(${DOBBY_DIR} dobby)
+    add_subdirectory(${DOBBY_DIR} dobby_static)
     get_property(DOBBY_INCLUDE_DIRECTORIES
-            TARGET dobby
+            TARGET dobby_static
             PROPERTY INCLUDE_DIRECTORIES)
     include_directories(
             .
             ${DOBBY_INCLUDE_DIRECTORIES}
-            $<TARGET_PROPERTY:dobby,INCLUDE_DIRECTORIES>
+            $<TARGET_PROPERTY:dobby_static,INCLUDE_DIRECTORIES>
     )
 endif ()
 
-target_link_libraries(native log dobby EGL GLESv2 android)
+target_link_libraries(native log dobby_static EGL GLESv2 android)

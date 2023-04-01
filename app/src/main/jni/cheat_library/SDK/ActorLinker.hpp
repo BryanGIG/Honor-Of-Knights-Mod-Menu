@@ -1,15 +1,27 @@
 struct S_ActorLinker_API {
 
+    uintptr_t myRenderer;
+
     uintptr_t myTransform;
+
+    uintptr_t ValueComponent;
 
     CGameObject *(*get_gameObject)(CActorLinker *, MethodInfo *);
 
     bool (*IsSelfCamp)(CActorLinker *, CActorLinker *,MethodInfo * );
+
 };
 extern S_ActorLinker_API ActorLinker_API;
 
 class CActorLinker {
 public:
+    CValueLinkerComponent *GetValueComponent() {
+        return Il2Cpp::GetField<CValueLinkerComponent *>(this, ActorLinker_API.ValueComponent);
+    }
+
+    CRenderer *GetRenderer() {
+        return Il2Cpp::GetField<CRenderer *>(this, ActorLinker_API.myRenderer);
+    }
 
     CGameObject *GetGameObject() {
         return ActorLinker_API.get_gameObject(this, nullptr);

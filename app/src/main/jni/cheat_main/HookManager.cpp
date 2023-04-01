@@ -150,14 +150,60 @@ namespace cheat::main {
         isFirstInit = true;
     }
 
+    static bool espLine;
+    static bool espBox;
+    static bool espHealth;
+    static bool espExp;
+    static bool espArmor;
+    static float healthBarHeight = 10.f;
+
+#define VEC2_TO_IMVEC2(vec2) ImVec2(vec2.X, vec2.Y)
+#define VEC2_TO_VEC3(vec2) Vector3(vec2.X, vec2.Y, 0)
+    void Box2D(Rect box, ImColor color) {
+        ImGui::GetBackgroundDrawList()->AddRect(ImVec2(box.x, box.y), ImVec2(box.x + box.width, box.y + box.height),
+                                                color,
+                                                0.f, 15, 1.5f);
+    }
+
+    ImColor GetHealthColor(float health, float maxHp = 100.f) {
+        float r = std::min(510 * (maxHp - health) / maxHp, 255.f);
+        float g = std::min(510 * health / maxHp, 255.f);
+        return ImVec4(r / 255.f, g / 255.f, 0.f, 1.0f);
+    }
+
+#define toPercentage(num, maxNum) (float)num / (float)maxNum * 100.f;
+
+    void DrawHealthBar(float currentHealth, float maxHealth, ImVec2 enemyPos) {
+        auto barSize = ImVec2(100, 10);
+        auto fillWidth = barSize.x * (currentHealth / maxHealth);
+        auto screenPos = ImVec2(enemyPos.x - barSize.x / 2, enemyPos.y + barSize.y / 2);
+        auto drawList = ImGui::GetBackgroundDrawList();
+
+        drawList->AddRectFilled(screenPos, ImVec2(screenPos.x + barSize.x, screenPos.y + barSize.y), IM_COL32(0,0,0, 180.f));
+        drawList->AddRectFilled(screenPos, ImVec2(screenPos.x + fillWidth, screenPos.y + barSize.y), GetHealthColor(currentHealth, maxHealth));
+    }
+
     void loopActor() {
         try {
+            auto bgDrawList = ImGui::GetBackgroundDrawList();
             auto localActor = ActorHelper::GetLocalActor();
             if (!localActor)
                 return;
 
-            for (int i = 0; i < actors.size(); ++i) {
-                auto actor = actors.at(i);
+            auto localObj = localActor->GetGameObject();
+            if (!localObj && !localObj->IsActive())
+                return;
+
+            auto localTr = localObj->GetTransform();
+            if (!localTr)
+                return;
+
+            Vector2 localPosSc;
+            auto localPos = localTr->GetPosition();
+
+            Camera::WorldToScreen(localPos, &localPosSc);
+
+            for (auto actor : actors) {
                 if (!actor)
                     continue;
 
@@ -171,17 +217,69 @@ namespace cheat::main {
                 if (!gObj->IsActive())
                     continue;
 
-                auto tr = gObj->GetTransform();
-                if (!tr)
+                auto transform = actor->GetTransform();
+                if (!transform)
                     continue;
 
                 Vector2 posSc;
-                auto pos = tr->GetPosition();
+                auto pos = transform->GetPosition();
 
                 if (!Camera::WorldToScreen(pos, &posSc))
                     continue;
 
-                ImGui::GetBackgroundDrawList()->AddLine({0, 0}, {posSc.X, posSc.Y}, IM_COL32_WHITE);
+                auto renderer = actor->GetRenderer();
+                if (!renderer)
+                    continue;
+
+                auto bounds = renderer->GetBounds();
+
+                auto screenCorners = new Vector2[8];
+                auto corners = new Vector3[8];
+                corners[0] = bounds.center + Vector3(bounds.extents.X, bounds.extents.Y, bounds.extents.Z);
+                corners[1] = bounds.center + Vector3(bounds.extents.X, bounds.extents.Y, -bounds.extents.Z);
+                corners[2] = bounds.center + Vector3(bounds.extents.X, -bounds.extents.Y, bounds.extents.Z);
+                corners[3] = bounds.center + Vector3(bounds.extents.X, -bounds.extents.Y, -bounds.extents.Z);
+                corners[4] = bounds.center + Vector3(-bounds.extents.X, bounds.extents.Y, bounds.extents.Z);
+                corners[5] = bounds.center + Vector3(-bounds.extents.X, bounds.extents.Y, -bounds.extents.Z);
+                corners[6] = bounds.center + Vector3(-bounds.extents.X, -bounds.extents.Y, bounds.extents.Z);
+                corners[7] = bounds.center + Vector3(-bounds.extents.X, -bounds.extents.Y, -bounds.extents.Z);
+
+                for (int i = 0; i < 8; i++) {
+                    Camera::WorldToScreen(corners[i], &screenCorners[i]);
+                }
+
+                auto min = screenCorners[0];
+                auto max = screenCorners[0];
+                for (int i = 1; i < 8; i++) {
+                    min = Vector2::Min(min, screenCorners[i]);
+                    max = Vector2::Max(max, screenCorners[i]);
+                }
+
+                Rect boxRect = Rect(min.X, max.Y, max.X - min.X, max.Y - min.Y);
+
+                if (espLine) {
+                    bgDrawList->AddLine(VEC2_TO_IMVEC2(localPosSc), VEC2_TO_IMVEC2(posSc), IM_COL32_BLACK, 2.f);
+                }
+
+                if (espBox) {
+                    bgDrawList->AddRect(VEC2_TO_IMVEC2(min), VEC2_TO_IMVEC2(max), IM_COL32_WHITE, 2, 0, 1.5f);
+                }
+
+                if (espHealth) {
+                    auto config = actor->GetValueComponent();
+                    if (config) {
+                        auto hp = toPercentage(config->GetHp(), config->GetMaxHp());
+                        DrawHealthBar(hp, 100, VEC2_TO_IMVEC2(posSc));
+                    }
+                }
+
+                if (espArmor) {
+
+                }
+
+                if (espExp) {
+
+                }
             }
         } catch (...) {}
     }
@@ -194,13 +292,17 @@ namespace cheat::main {
 
         ImGui::NewFrame();
 
-        ImGui::SetNextWindowSize(ImVec2(600, 300), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize({0, 0}, ImGuiCond_FirstUseEver);
 
-        if (!ImGui::Begin(OBFUSCATE("BryanGIG")))
+        if (!ImGui::Begin(OBFUSCATE("HoK Mod Menu (Testing)")))
             return;
 
-
-        ImGui::Text("Surface (%.1f FPS)", io.Framerate);
+        ImGui::Checkbox("ESP Line", &espLine);
+        ImGui::Checkbox("ESP Box", &espBox);
+        ImGui::Checkbox("ESP Health", &espHealth);
+        ImGui::Checkbox("ESP Exp", &espExp);
+        ImGui::Checkbox("ESP Armor", &espArmor);
+        ImGui::Text("Application: (%.1f FPS)", io.Framerate);
     }
 
     void ClearGUI() {

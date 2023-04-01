@@ -15,6 +15,8 @@
 
 class CObject;
 
+class CRenderer;
+
 class CComponent;
 
 class CTransform;
@@ -31,8 +33,11 @@ class CGamePlay;
 
 class CActorHelper;
 
+class CValueLinkerComponent;
+
 #include "Object.hpp"
 #include "Component.hpp"
+#include "Renderer.hpp"
 #include "Transform.hpp"
 #include "GameObject.hpp"
 #include "Camera.hpp"
@@ -41,6 +46,7 @@ class CActorHelper;
 #include "ActorLinker.hpp"
 #include "ActorCreators.hpp"
 #include "ActorHelper.hpp"
+#include "ValueLinkerComponent.hpp"
 
 namespace Il2Cpp {
 
@@ -49,6 +55,7 @@ namespace Il2Cpp {
 
         Object::Initialize();
         Component::Initialize();
+        Renderer::Initialize();
         Transform::Initialize();
         GameObject::Initialize();
         Camera::Initialize();
@@ -57,6 +64,7 @@ namespace Il2Cpp {
         ActorCreators::Initialize();
         ActorLinker::Initialize();
         ActorHelper::Initialize();
+        ValueLinkerComponent::Initialize();
         LOGI("libil2cpp.so completed!");
         IsReady = true;
     }

@@ -17,7 +17,9 @@ namespace ActorLinker {
     }
 
     void Initialize() {
+        ActorLinker_API.myRenderer = getFieldOffset("myRenderer");
         ActorLinker_API.myTransform = getFieldOffset("myTransform");
+        ActorLinker_API.ValueComponent = getFieldOffset("ValueComponent");
         setPointer(ActorLinker_API.get_gameObject, "get_gameObject", 0);
         setPointer(ActorLinker_API.IsSelfCamp, "IsSelfCamp", 1);
     }

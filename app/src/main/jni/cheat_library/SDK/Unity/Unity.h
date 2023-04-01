@@ -6,6 +6,7 @@
 #include "Rect.hpp"
 #include "Color.hpp"
 #include "RaycastHIt.hpp"
+#include "Bounds.hpp"
 #include <cstdlib>
 #include <uchar.h>
 #include <stdio.h>
