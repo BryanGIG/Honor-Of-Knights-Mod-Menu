@@ -11,6 +11,10 @@ import java.lang.reflect.Method;
 public class JNIBridge {
     public static native void onCreate(Context ctx);
 
+    public static native void onPause();
+
+    public static native void onResume();
+
     public static native void surfaceCreate(Surface surface, int width, int height);
 
     public static native void surfaceChanged(int width, int height);

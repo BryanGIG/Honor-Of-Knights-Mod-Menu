@@ -480,4 +480,18 @@ namespace cheat::main {
         }
         return false;
     }
+
+    extern "C"
+    JNIEXPORT void JNICALL
+    Java_com_android_support_JNIBridge_onPause(JNIEnv *env, jclass clazz) {
+        isPause = true;
+        LOGW("Pause");
+    }
+
+    extern "C"
+    JNIEXPORT void JNICALL
+    Java_com_android_support_JNIBridge_onResume(JNIEnv *env, jclass clazz) {
+        isPause = false;
+        LOGW("Resume");
+    }
 }
