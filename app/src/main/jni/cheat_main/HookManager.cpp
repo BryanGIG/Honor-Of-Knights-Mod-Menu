@@ -155,6 +155,7 @@ namespace cheat::main {
     static bool espHealth;
     static bool espExp;
     static bool espArmor;
+    static bool espName;
     static float healthBarHeight = 10.f;
 
 #define VEC2_TO_IMVEC2(vec2) ImVec2(vec2.X, vec2.Y)
@@ -171,7 +172,7 @@ namespace cheat::main {
         return ImVec4(r / 255.f, g / 255.f, 0.f, 1.0f);
     }
 
-#define toPercentage(num, maxNum) (float)num / (float)maxNum * 100.f;
+#define toPercentage(num, maxNum) (float) num / (float) maxNum * 100.f
 
     void DrawHealthBar(float currentHealth, float maxHealth, ImVec2 enemyPos) {
         auto barSize = ImVec2(100, 10);
@@ -210,75 +211,81 @@ namespace cheat::main {
                 if (localActor->IsSelfCamp(actor))
                     continue;
 
-                auto gObj = actor->GetGameObject();
-                if (!gObj)
+                auto valConfig = actor->GetValueComponent();
+                if (!valConfig)
                     continue;
 
-                if (!gObj->IsActive())
-                    continue;
-
-                auto transform = actor->GetTransform();
-                if (!transform)
+                auto hpPercent = toPercentage(valConfig->GetHp(), valConfig->GetMaxHp());
+                if (hpPercent <= 0.f)
                     continue;
 
                 Vector2 posSc;
-                auto pos = transform->GetPosition();
+                auto pos = actor->GetPosition();
 
                 if (!Camera::WorldToScreen(pos, &posSc))
                     continue;
 
-                auto renderer = actor->GetRenderer();
-                if (!renderer)
-                    continue;
-
-                auto bounds = renderer->GetBounds();
-
-                auto screenCorners = new Vector2[8];
-                auto corners = new Vector3[8];
-                corners[0] = bounds.center + Vector3(bounds.extents.X, bounds.extents.Y, bounds.extents.Z);
-                corners[1] = bounds.center + Vector3(bounds.extents.X, bounds.extents.Y, -bounds.extents.Z);
-                corners[2] = bounds.center + Vector3(bounds.extents.X, -bounds.extents.Y, bounds.extents.Z);
-                corners[3] = bounds.center + Vector3(bounds.extents.X, -bounds.extents.Y, -bounds.extents.Z);
-                corners[4] = bounds.center + Vector3(-bounds.extents.X, bounds.extents.Y, bounds.extents.Z);
-                corners[5] = bounds.center + Vector3(-bounds.extents.X, bounds.extents.Y, -bounds.extents.Z);
-                corners[6] = bounds.center + Vector3(-bounds.extents.X, -bounds.extents.Y, bounds.extents.Z);
-                corners[7] = bounds.center + Vector3(-bounds.extents.X, -bounds.extents.Y, -bounds.extents.Z);
-
-                for (int i = 0; i < 8; i++) {
-                    Camera::WorldToScreen(corners[i], &screenCorners[i]);
-                }
-
-                auto min = screenCorners[0];
-                auto max = screenCorners[0];
-                for (int i = 1; i < 8; i++) {
-                    min = Vector2::Min(min, screenCorners[i]);
-                    max = Vector2::Max(max, screenCorners[i]);
-                }
-
-                Rect boxRect = Rect(min.X, max.Y, max.X - min.X, max.Y - min.Y);
 
                 if (espLine) {
                     bgDrawList->AddLine(VEC2_TO_IMVEC2(localPosSc), VEC2_TO_IMVEC2(posSc), IM_COL32_BLACK, 2.f);
                 }
 
                 if (espBox) {
-                    bgDrawList->AddRect(VEC2_TO_IMVEC2(min), VEC2_TO_IMVEC2(max), IM_COL32_WHITE, 2, 0, 1.5f);
-                }
+                    auto renderer = actor->GetRenderer();
+                    if (renderer) {
+                        auto bounds = renderer->GetBounds();
 
-                if (espHealth) {
-                    auto config = actor->GetValueComponent();
-                    if (config) {
-                        auto hp = toPercentage(config->GetHp(), config->GetMaxHp());
-                        DrawHealthBar(hp, 100, VEC2_TO_IMVEC2(posSc));
+                        auto screenCorners = new Vector2[8];
+                        auto corners = new Vector3[8];
+                        corners[0] = bounds.center + Vector3(bounds.extents.X, bounds.extents.Y, bounds.extents.Z);
+                        corners[1] = bounds.center + Vector3(bounds.extents.X, bounds.extents.Y, -bounds.extents.Z);
+                        corners[2] = bounds.center + Vector3(bounds.extents.X, -bounds.extents.Y, bounds.extents.Z);
+                        corners[3] = bounds.center + Vector3(bounds.extents.X, -bounds.extents.Y, -bounds.extents.Z);
+                        corners[4] = bounds.center + Vector3(-bounds.extents.X, bounds.extents.Y, bounds.extents.Z);
+                        corners[5] = bounds.center + Vector3(-bounds.extents.X, bounds.extents.Y, -bounds.extents.Z);
+                        corners[6] = bounds.center + Vector3(-bounds.extents.X, -bounds.extents.Y, bounds.extents.Z);
+                        corners[7] = bounds.center + Vector3(-bounds.extents.X, -bounds.extents.Y, -bounds.extents.Z);
+
+                        for (int i = 0; i < 8; i++) {
+                            Camera::WorldToScreen(corners[i], &screenCorners[i]);
+                        }
+
+                        auto min = screenCorners[0];
+                        auto max = screenCorners[0];
+                        for (int i = 1; i < 8; i++) {
+                            min = Vector2::Min(min, screenCorners[i]);
+                            max = Vector2::Max(max, screenCorners[i]);
+                        }
+
+                        bgDrawList->AddRect(VEC2_TO_IMVEC2(min), VEC2_TO_IMVEC2(max), IM_COL32_WHITE, 2, 0, 1.5f);
                     }
                 }
 
-                if (espArmor) {
-
+                if (espHealth) {
+                    DrawHealthBar(hpPercent, 100, VEC2_TO_IMVEC2(posSc));
                 }
 
-                if (espExp) {
+                if (espName || espArmor || espExp) {
+                    std::string textDraw;
+                    if (espName) {
+                        textDraw += "Name: " + actor->GetName();
+                        textDraw += "\n";
+                    }
 
+                    if (espArmor) {
+                        textDraw += "Armor: " + std::to_string(valConfig->GetArmor()) + " | " +std::to_string(valConfig->GetMaxArmor());
+                        textDraw += "\n";
+                    }
+
+                    if (espExp) {
+                        textDraw += "Exp: " + std::to_string(valConfig->GetExp()) + " | " +std::to_string(valConfig->GetMaxExp());
+                        textDraw += "\n";
+                    }
+
+                    ImVec2 textSize = ImGui::CalcTextSize(textDraw.c_str());
+                    ImVec2 center = {posSc.X - 10, posSc.Y + 10};
+                    ImVec2 textPos = ImVec2(center.x - textSize.x * 0.5f, center.y - textSize.y * 0.5f);
+                    bgDrawList->AddText(textPos, IM_COL32_WHITE, textDraw.c_str());
                 }
             }
         } catch (...) {}
@@ -302,6 +309,7 @@ namespace cheat::main {
         ImGui::Checkbox("ESP Health", &espHealth);
         ImGui::Checkbox("ESP Exp", &espExp);
         ImGui::Checkbox("ESP Armor", &espArmor);
+        ImGui::Checkbox("ESP Name", &espName);
         ImGui::Text("Application: (%.1f FPS)", io.Framerate);
     }
 

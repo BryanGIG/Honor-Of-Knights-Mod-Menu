@@ -1,5 +1,9 @@
 struct S_ActorLinker_API {
 
+    uintptr_t position;
+
+    uintptr_t name;
+
     uintptr_t myRenderer;
 
     uintptr_t myTransform;
@@ -29,6 +33,15 @@ public:
 
     CTransform *GetTransform() {
         return Il2Cpp::GetField<CTransform *>(this, ActorLinker_API.myTransform);
+    }
+
+    std::string GetName() {
+        auto str = Il2Cpp::GetField<Il2CppString *>(this, ActorLinker_API.name);
+        return Il2Cpp::GetString(str);
+    }
+
+    Vector3 GetPosition() {
+        return Il2Cpp::GetField<Vector3>(this, ActorLinker_API.position);
     }
 
     bool IsSelfCamp(CActorLinker *other) {
